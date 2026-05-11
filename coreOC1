@@ -774,3 +774,83 @@ VPC USING NAT GATEWAY
 12.Select the route, click on actions, goto edit subnet associations and add private subnet to this bastion route.
 13.Again goto actions and click on edit routes, attach NAT Gateway with 0.0.0.0/0, select your NAT gateway name in the drop down menu and click on save changes.
 14.Now check in the dbsever you will internet in ec2 of private subnet.
+Week 6 — VPC Using Bastion Server (Simple Revision)
+Use same Week 5 setup
+Same VPC
+Same public subnet
+Same private subnet
+Same IGW
+Same route tables
+Public EC2 acts as Bastion Server
+Public subnet EC2 = Bastion
+Private subnet EC2 = Private Server/DB Server
+Change Security Groups
+Public EC2 SG
+
+Inbound:
+
+SSH 22 → Anywhere IPv4
+Private EC2 SG
+
+Inbound:
+
+SSH 22 → 10.0.1.0/24
+
+(Allow SSH only from public subnet/Bastion)
+
+Open PowerShell
+
+Go to Downloads folder:
+
+cd Downloads
+Copy private key to Bastion
+scp -i publickp.pem privatekp.pem ec2-user@<PUBLIC-IP>:/home/ec2-user/
+SSH into Bastion
+ssh -i publickp.pem ec2-user@<PUBLIC-IP>
+Check copied file
+
+Inside Bastion:
+
+ls
+
+See:
+
+privatekp.pem
+Give permission
+chmod 400 privatekp.pem
+Copy Private EC2 private IP
+
+AWS Console →
+Private EC2 →
+Copy:
+
+Private IPv4
+SSH from Bastion to Private EC2
+ssh -i privatekp.pem ec2-user@<PRIVATE-IP>
+Successfully entered private EC2 🎉
+
+Architecture:
+
+Laptop
+   ↓
+Bastion/Public EC2
+   ↓
+Private EC2
+NAT Gateway Part
+Create NAT Gateway
+Create in PUBLIC subnet
+Allocate Elastic IP
+Edit Private Route Table
+
+Add:
+
+0.0.0.0/0 → NAT Gateway
+Now private EC2 gets internet
+
+Test:
+
+sudo yum update
+
+or
+
+sudo apt update
