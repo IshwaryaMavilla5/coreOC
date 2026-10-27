@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+</head>
+<body>
+  1    import React, { createContext, useContext, useState } from "react";
+import { BrowserRouter, Routes, Route, Link, useParams, useNavigate, Navigate } from "react-router-dom";
+
+const C = createContext();
+
+const products = [
+  { id: 1, name: "Laptop", price: 55000 },
+  { id: 2, name: "Headphones", price: 2500 },
+  { id: 3, name: "Smart Watch", price: 4000 },
+  { id: 4, name: "Backpack", price: 1200 }
+];
+
+function Home() {
+  return <><h2>Welcome to MyShop</h2>
+    <p>Browse our products and add your favourites to the cart.</p>
+    <Link to="/products">Shop now</Link></>;
+}
+
+function Products() {
+  return <><h2>Products</h2>
+    {products.map(p => (
+      <div key={p.id}>
+        <h3>{p.name}</h3>
+        <p>₹{p.price}</p>
+        <Link to={"/products/" + p.id}>View details</Link>
+      </div>
+    ))}
+  </>;
+}
+
+function Details() {
+  const { id } = useParams();
+  const { setCart } = useContext(C);
+  const p = products.find(x => x.id === Number(id));
+
+  if (!p) return <h2>Product not found</h2>;
+
+  return <><h2>{p.name}</h2>
+    <p>{p.name} - ₹{p.price}</p>
+    <button onClick={() => setCart(c => [...c, p])}>
+      Add to cart
+    </button>
+    <Link to="/products"> Back</Link></>;
+}
+
+function Login() {
+  const { setUser } = useContext(C);
+  const [name, setName] = useState("");
+  const [pass, setPass] = useState("");
+  const [error, setError] = useState("");
+  const go = useNavigate();
+
+  function login() {
+    if (name && pass === "1234") {
+      setUser(name);
+      go("/cart");
+    } else {
+      setError("Enter username and password 1234");
+    }
+  }
+
+  return <><h2>Login</h2>
+    <input placeholder="Username"
+      onChange={e => setName(e.target.value)} /><br /><br />
+    <input type="password" placeholder="Password"
+      onChange={e => setPass(e.target.value)} /><br /><br />
+    <button onClick={login}>Login</button>
+    <p>{error}</p></>;
+}
+
+function Cart() {
+  const { cart, setCart } = useContext(C);
+  const total = cart.reduce((s, p) => s + p.price, 0);
+
+  return <><h2>Your Cart</h2>
+    {cart.length === 0 ? <p>Cart is empty.</p> :
+      cart.map((p, i) => <p key={i}>
+        {p.name} - ₹{p.price}
+        <button onClick={() =>
+          setCart(cart.filter((x, j) => j !== i))}>
+          Remove
+        </button>
+      </p>)}
+    <h3>Total: ₹{total}</h3>
+  </>;
+}
+
+function Contact() {
+  const [sent, setSent] = useState(false);
+  return <><h2>Contact Us</h2>
+    {sent ? <p>Thanks! We will get back to you.</p> :
+      <>
+        <input placeholder="Your email" /><br /><br />
+        <textarea placeholder="Message" /><br /><br />
+        <button onClick={() => setSent(true)}>Send</button>
+      </>}
+  </>;
+}
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [cart, setCart] = useState([]);
+
+  return <C.Provider value={{ user, setUser, cart, setCart }}>
+    <BrowserRouter>
+      <nav>
+        <Link to="/">Home</Link>{" | "}
+        <Link to="/products">Products</Link>{" | "}
+        <Link to="/contact">Contact</Link>{" | "}
+        <Link to="/cart">Cart ({cart.length})</Link>{" | "}
+        {user ? <>Hi, {user}{" "}
+          <button onClick={() => {
+            setUser(null);
+          }}>Logout</button></> :
+          <Link to="/login">Login</Link>}
+      </nav>
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/products/:id" element={<Details />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/cart" element={
+          user ? <Cart /> : <Navigate to="/login" />
+        } />
+        <Route path="*" element={<h2>404 - Page Not Found</h2>} />
+      </Routes>
+    </BrowserRouter>
+  </C.Provider>;
+}
+
+export default App;
+          2     2
+```jsx
+import React, { useState } from "react";
+
+export default function App() {
+  const [data, setData] = useState({
+    name: "", email: "", age: "",
+    gender: "", course: "", skills: [], about: ""
+  });
+
+  const [show, setShow] = useState(false);
+
+  function handleChange(e) {
+    const { name, value, type, checked } = e.target;
+
+    if (type === "checkbox") {
+      setData({
+        ...data,
+        skills: checked
+          ? [...data.skills, value]
+          : data.skills.filter(s => s !== value)
+      });
+    } else {
+      setData({ ...data, [name]: value });
+    }
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    setShow(true);
+  }
+
+  return (
+    <div style={{ width: "400px", margin: "auto" }}>
+      <h2>Student Registration</h2>
+
+      <form onSubmit={handleSubmit}>
+        Full Name:
+        <input name="name" value={data.name}
+          onChange={handleChange} required /><br /><br />
+
+        Email:
+        <input type="email" name="email" value={data.email}
+          onChange={handleChange} required /><br /><br />
+
+        Age:
+        <input type="number" name="age" value={data.age}
+          onChange={handleChange} /><br /><br />
+
+        Gender:
+        {["Male", "Female", "Other"].map(g =>
+          <label key={g}>
+            <input type="radio" name="gender" value={g}
+              checked={data.gender === g}
+              onChange={handleChange} />{g}
+          </label>
+        )}
+        <br /><br />
+
+        Course:
+        <select name="course" value={data.course}
+          onChange={handleChange}>
+          <option value="">Select</option>
+          {["BCA", "B.Tech", "MCA", "MBA"].map(c =>
+            <option key={c}>{c}</option>
+          )}
+        </select>
+        <br /><br />
+
+        Skills:
+        {["React", "Java", "Python"].map(s =>
+          <label key={s}>
+            <input type="checkbox" value={s}
+              checked={data.skills.includes(s)}
+              onChange={handleChange} />{s}
+          </label>
+        )}
+        <br /><br />
+
+        About You:
+        <textarea name="about" value={data.about}
+          onChange={handleChange} />
+        <br /><br />
+
+        <button type="submit">Submit</button>
+      </form>
+
+      {show && (
+        <div>
+          <h3>Submitted Data</h3>
+          <p>Name: {data.name}</p>
+          <p>Email: {data.email}</p>
+          <p>Age: {data.age}</p>
+          <p>Gender: {data.gender}</p>
+          <p>Course: {data.course}</p>
+          <p>Skills: {data.skills.join(", ")}</p>
+          <p>About: {data.about}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+          3    3
+
+import React, { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+
+const usersData = [
+  { id: 1, name: "Leanne Graham", email: "leanne@example.com", city: "Hyderabad" },
+  { id: 2, name: "Ervin Howell", email: "ervin@example.com", city: "Chennai" },
+  { id: 3, name: "Clementine Bauch", email: "clem@example.com", city: "Mumbai" },
+  { id: 4, name: "Patricia Lebsack", email: "patricia@example.com", city: "Delhi" },
+  { id: 5, name: "Chelsey Dietrich", email: "chelsey@example.com", city: "Pune" }
+];
+
+function Home() {
+  return <><h2>Home</h2>
+    <p>Open Users page to see user data.</p></>;
+}
+
+function Users() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setTimeout(() => {
+      try {
+        setUsers(usersData);
+      } catch (e) {
+        setError("Failed to load users");
+      }
+      setLoading(false);
+    }, 2000);
+  }, []);
+
+  if (loading) return <p>Loading users...</p>;
+  if (error) return <p>{error}</p>;
+
+  return <>
+    <h2>Users</h2>
+    <table border="1" cellPadding="8">
+      <thead>
+        <tr>
+          <th>ID</th><th>Name</th>
+          <th>Email</th><th>City</th>
+        </tr>
+      </thead>
+      <tbody>
+        {users.map(u => (
+          <tr key={u.id}>
+            <td>{u.id}</td>
+            <td>{u.name}</td>
+            <td>{u.email}</td>
+            <td>{u.city}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </>;
+}
+
+export default function App() {
+  return <BrowserRouter>
+    <nav>
+      <Link to="/">Home</Link>{" | "}
+      <Link to="/users">Users</Link>
+    </nav>
+
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/users" element={<Users />} />
+    </Routes>
+  </BrowserRouter>;
+}
+          or
+          
+</body>
+</html>
